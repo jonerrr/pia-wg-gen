@@ -39,11 +39,11 @@ jobs:
       - name: Rename binaries
         shell: bash
         run: |
-          name="pia-wg-gen_${{ matrix.build }}_${{ github.event.release.tag_name }}"
+          name="${{ github.event.repository.name }}_${{ matrix.build }}_${{ github.event.release.tag_name }}"
           if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
             name="${name}.exe"
           fi
-          mv target/release/cync $name
+          mv target/release/${{ github.event.repository.name }} $name
 
       - name: Upload Release Asset
         if: github.event_name == 'release'
@@ -52,4 +52,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           files: |
-            pia-wg-gen_${{ matrix.build }}_${{ github.event.release.tag_name }}
+            ${{ github.event.repository.name }}_${{ matrix.build }}_${{ github.event.release.tag_name }}
