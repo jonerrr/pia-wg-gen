@@ -33,7 +33,7 @@ struct KeyStatus {
 impl Config {
     pub async fn new(cn: &str, token: &str, port: i32, client: &reqwest::Client) -> Result<Self> {
         let private_key = wireguard_keys::Privkey::generate();
-        println!("[INFO] Wireguard private generated");
+        println!("Wireguard private key generated");
 
         let key_data: KeyStatus = client
             .get(format!("https://{cn}:{port}/addKey"))
@@ -43,12 +43,9 @@ impl Config {
             .json()
             .await?;
         if key_data.status != "OK" {
-            bail!(
-                "[ERROR] Error occurred while adding key to PIA: {:?}",
-                key_data.message
-            )
+            bail!("Error creating private key: {:?}", key_data.message)
         }
-        println!("[INFO] Public key added to PIA");
+        println!("Public key added to PIA");
 
         Ok(Config {
             private_key,
@@ -69,7 +66,7 @@ impl Config {
         );
         tokio::fs::write(&path, data)
             .await
-            .expect("[ERROR] failed to save wireguard configuration");
-        println!("[INFO] Config saved to disk at: {:?}", path);
+            .expect("Failed to save wireguard configuration");
+        println!("Config saved to disk at: {:?}", path);
     }
 }

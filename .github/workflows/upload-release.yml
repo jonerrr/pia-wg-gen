@@ -1,0 +1,55 @@
+name: upload
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  build-release:
+    name: build-release
+    strategy:
+      matrix:
+        build: [linux-x86_64, macos-x86_64, windows-x86_64-msvc]
+        include:
+          - build: linux-x86_64
+            os: ubuntu-latest
+            rust: stable
+            target: x86_64-unknown-linux-gnu
+          - build: macos-x86_64
+            os: macos-latest
+            rust: stable
+            target: x86_64-apple-darwin
+          - build: windows-x86_64-msvc
+            os: windows-latest
+            rust: stable-x86_64-msvc
+            target: x86_64-pc-windows-msvc
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: install rustup
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > rustup-init.sh
+          sh rustup-init.sh -y --default-toolchain none
+          rustup target add ${{ matrix.target }}
+
+      - name: Build release binaries
+        run: cargo build --release
+
+      - name: Rename binaries
+        shell: bash
+        run: |
+          name="pia-wg-gen_${{ matrix.build }}_${{ github.event.release.tag_name }}"
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            name="${name}.exe"
+          fi
+          mv target/release/cync $name
+
+      - name: Upload Release Asset
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          files: |
+            pia-wg-gen_${{ matrix.build }}_${{ github.event.release.tag_name }}
